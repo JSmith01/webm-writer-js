@@ -1,16 +1,17 @@
+import { WebMWriter } from '../../main.mjs';
+
 function pickFile() {
     return new Promise(function(resolve, reject) {
         chrome.fileSystem.chooseEntry({type: 'saveFile', suggestedName: "video.webm", accepts: [{extensions: ['webm']}]}, function(fileEntry) {
-            let
-                error = chrome.runtime.lastError;
-            
+            let error = chrome.runtime.lastError;
+
             if (error) {
                 console.error(error.message);
-                
-                if (error.message != "User cancelled") {
+
+                if (error.message !== "User cancelled") {
                     console.log("Write failed");
                 }
-                
+
                 reject();
             } else {
                 resolve(fileEntry);
@@ -37,50 +38,50 @@ function renderToDevice(fileEntry, fileWriter) {
             frameRate: 30,
             fileWriter: fileWriter
         }),
-        
+
         canvas = document.getElementById("canvas"),
         context = canvas.getContext("2d"),
         video = document.getElementsByTagName("video")[0],
-        
+
         helloWorld = "Hello World",
-        
+
         textWidth,
         textHeight = 20,
-        
+
         posX = 0, posY = 0,
         directionX = 1, directionY = 1,
-        
+
         stepSize = 15,
         maxFrames = 200;
-    
+
     context.font = textHeight + "pt Arial";
     textWidth = context.measureText(helloWorld).width;
-    
+
     let renderFrame = function(frameIndex) {
         context.fillStyle = "#eee";
         context.fillRect(0, 0, canvas.width, canvas.height);
-        
+
         context.fillStyle = "black";
         context.fillText(helloWorld, posX, posY + textHeight);
 
         videoWriter.addFrame(canvas);
-        
+
         posX += directionX * stepSize;
         posY += directionY * stepSize;
-        
+
         if (posX < 0 || posX + textWidth >= canvas.width) {
             directionX *= -1;
         }
         if (posY < 0 || posY + textHeight >= canvas.height) {
             directionY *= -1;
         }
-        
+
         setTimeout(function() {
-            if (frameIndex == maxFrames) {
+            if (frameIndex === maxFrames) {
                 if (fileWriter == null) {
                     videoWriter.complete().then(function(webMBlob) {
                         video.src = URL.createObjectURL(webMBlob);
-                        
+
                         saveAs(webMBlob, 'video.webm');
                     });
                 } else {
@@ -88,11 +89,11 @@ function renderToDevice(fileEntry, fileWriter) {
                         fileEntry.file(function(file) {
                             let
                                 fileReader = new FileReader();
-                            
+
                             fileReader.onloadend = function() {
                                 video.src = fileReader.result;
                             }
-                            
+
                             fileReader.readAsDataURL(file);
                         });
                     });
@@ -102,7 +103,7 @@ function renderToDevice(fileEntry, fileWriter) {
             }
         }, 0);
     };
-    
+
     renderFrame(0);
 }
 
